@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Autofac;
-using Autofac.Core;
 
 namespace IpAddressAnalyzer.Runner
 {
@@ -22,17 +20,14 @@ namespace IpAddressAnalyzer.Runner
             {
                 path = args[0];
             }
+            int pageSize = 20;
             var analyzer = new DataAnalyzer(path);
             var helper = new DataHelper();
             helper.Subscribe(analyzer);
             analyzer.Analyze();
             helper.SerializeData(analyzer);
-            var printer = new ConsolePrinter(20, analyzer.ExecutionTime, analyzer.People, analyzer.CurrentLine);
+            var printer = new ConsolePrinter(pageSize, analyzer.ExecutionTime, analyzer.People, analyzer.CurrentLine);
             printer.Print();
         }
-
-
-
-
     }
 }
