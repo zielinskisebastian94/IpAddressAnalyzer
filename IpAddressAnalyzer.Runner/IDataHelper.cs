@@ -2,7 +2,7 @@
 {
     public interface IDataHelper
     {
-        void SerializeData(IDataAnalyzer analyzer);
+         DataSerializer SerializeData(IDataAnalyzer analyzer);
         void Subscribe(IDataAnalyzer d);
     }
 }

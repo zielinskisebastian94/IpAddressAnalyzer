@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 namespace IpAddressAnalyzer
 {
     [Serializable]
-    [JsonObject(MemberSerialization.OptOut)]
+    [JsonObject(MemberSerialization.OptOut, Title = "Person")]
     public class Person
     {
         public Person(string name, string surname, string email, string coutry, string ipAddress)

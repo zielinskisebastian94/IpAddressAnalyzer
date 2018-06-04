@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks.Dataflow;
 using CsvHelper;
 using CsvHelper.Configuration;
 
@@ -11,12 +13,12 @@ namespace IpAddressAnalyzer
 {
     public class DataAnalyzer : IDataAnalyzer
     {
-        public delegate void ProgressHandler(int currentLine, EventArgs e, DataAnalyzer d);
+        public delegate void ProgressHandler(long analyzedBytes, EventArgs e, DataAnalyzer d);
 
         private readonly string _filePath;
 
-        private int _currentLine;
         private readonly EventArgs e = null;
+        private long _percentAnalyzed;
 
         public DataAnalyzer(string path)
         {
@@ -26,18 +28,24 @@ namespace IpAddressAnalyzer
 
         public List<Person> People { get; set; }
         public bool Continue { get; set; } = true;
-        public int FileSize { get; private set; }
+        public long FileSize { get; private set; }
         public double ExecutionTime { get; set; }
 
-        public int CurrentLine
+        public long PercentAnalyzed
         {
-            get => _currentLine;
-            private set
+            get => _percentAnalyzed;
+            set
             {
-                _currentLine = value;
-                Progress?.Invoke(CurrentLine, e, this);
+                _percentAnalyzed = value;
+                if(_percentAnalyzed%3==0)
+                    Progress?.Invoke(AnalyzedBytesSize, e, this);
             }
         }
+
+
+        public int CurrentLine { get; private set; }
+
+        public long AnalyzedBytesSize { get; set; }
 
         public event ProgressHandler Progress;
 
@@ -46,7 +54,7 @@ namespace IpAddressAnalyzer
             var fileInfo = new FileInfo(_filePath);
             if (fileInfo.Exists)
             {
-                FileSize = File.ReadLines(_filePath).Count();
+                FileSize = fileInfo.Length;
                 using (var reader = new StreamReader(_filePath))
                 {
                     using (var csv = new CsvReader(reader))
@@ -70,8 +78,11 @@ namespace IpAddressAnalyzer
             csv.Configuration.HasHeaderRecord = false;
             var r = new Regex("(\\.10\\W)");
             CurrentLine = 0;
+            AnalyzedBytesSize = 0;
             while (csv.Read())
             {
+                AnalyzedBytesSize += csv.Context.RawRecord.Length;
+                PercentAnalyzed =(AnalyzedBytesSize * 100 / FileSize);
                 CurrentLine++;
                 var value = csv.GetField(4);
                 if (r.IsMatch(value))
